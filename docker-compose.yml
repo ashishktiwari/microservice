@@ -1,0 +1,96 @@
+version: '3.6'
+services:
+    config-server:
+        container_name: config-server
+        build:
+            context: .
+            dockerfile: Dockerfile-configserver
+        image: config-server:latest
+        expose:
+            - 9090
+        ports:
+            - 9090:9090
+        networks:
+            - docker-network
+        volumes:
+            - config-repo:/var/lib/config-repo
+    eureka-server:
+        container_name: eureka-server
+        build:
+            context: .
+            dockerfile: Dockerfile-servicediscovery
+        image: eureka-server:latest
+        expose:
+            - 9091
+        ports:
+            - 9091:9091
+        networks:
+            - docker-network
+    EmployeeSearchService:
+        container_name: EmployeeSearch
+        build:
+            context: .
+            dockerfile: Dockerfile-employeesearch
+        image: employeesearch:latest
+        environment:
+            SPRING_APPLICATION_JSON: '{"spring": {"cloud": {"config": {"uri": "http://config-server:9090"}}}}'
+        expose:
+            - 8080
+        ports:
+            - 8080:8080
+        networks:
+            - docker-network
+        links:
+            - config-server:config-server
+            - eureka-server:eureka-server
+        depends_on:
+            - config-server
+            - eureka-server
+        logging:
+            driver: json-file
+    EmployeeDashboardService:
+        container_name: EmployeeDashboard
+        build:
+            context: .
+            dockerfile: Dockerfile-employeedashboard
+        image: employeedashboard:latest
+        environment:
+            SPRING_APPLICATION_JSON: '{"spring": {"cloud": {"config": {"uri": "http://config-server:9090"}}}}'
+        expose:
+            - 8081
+        ports:
+            - 8081:8081
+        networks:
+            - docker-network
+        links:
+            - config-server:config-server
+            - eureka-server:eureka-server
+        depends_on:
+            - config-server
+            - eureka-server
+        logging:
+            driver: json-file
+    ZuulServer:
+        container_name: ZuulServer
+        build:
+            context: .
+            dockerfile: Dockerfile-gateway
+        image: zuulserver:latest
+        expose:
+            - 8084
+        ports:
+            - 8084:8084
+        networks:
+            - docker-network
+        links:
+            - eureka-server:eureka-server
+        depends_on:
+            - eureka-server
+        logging:
+            driver: json-file
+networks:
+    docker-network:
+        driver: bridge
+volumes:
+    config-repo:
+        external: true

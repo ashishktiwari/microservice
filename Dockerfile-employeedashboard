@@ -1,0 +1,6 @@
+FROM alpine-jdk:base
+MAINTAINER javaonfly
+COPY files/EmployeeDashboard-0.0.1-SNAPSHOT.jar /opt/lib/
+ENTRYPOINT ["/usr/bin/java"]
+CMD ["-jar", "/opt/lib/EmployeeDashboard-0.0.1-SNAPSHOT.jar"]
+EXPOSE 8081
